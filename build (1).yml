@@ -1,0 +1,49 @@
+name: Build PEPSI APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "proyek-pepsi.zip"
+      - ".github/workflows/build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
+      - name: Ekstrak proyek
+        run: unzip -q proyek-pepsi.zip -d proyek
+
+      - name: Build APK
+        working-directory: proyek
+        run: gradle assembleDebug --no-daemon
+
+      - name: Beri nama APK
+        run: cp proyek/app/build/outputs/apk/debug/app-debug.apk PEPSI.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PEPSI-APK
+          path: PEPSI.apk
+
+      - name: Terbitkan di Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: PEPSI v${{ github.run_number }}
+          files: PEPSI.apk
